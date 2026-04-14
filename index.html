@@ -12,6 +12,10 @@
   <title>EWGF Perfect Trainer</title>
   <style>
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;overflow:hidden;
+  background:var(--bg);
+}
 :root{
   --bg:#06060d;--s1:#0c0c1a;--s2:#121224;--s3:#1a1a2e;
   --bd:#252545;--bd2:#3a3a6a;
@@ -19,11 +23,22 @@
   --el:#00b8ff;--el2:#7700ee;--gold:#ffc300;
   --ok:#00e07a;--fail:#ff3344;
   --b1:#4488ff;--b2:#ffaa00;--b3:#33bb55;--b4:#ff4455;
+  /* ── Scalable size tokens (all driven by vmin so they scale with
+        the smaller viewport dimension — correct on both landscape
+        monitors and portrait phones) ── */
+  --np-sz:clamp(38px,5vmin,60px);       /* numpad cell */
+  --bc-sz:clamp(32px,4.2vmin,50px);     /* button circle */
+  --gap-np:clamp(2px,0.4vmin,5px);      /* numpad gap */
+  --gap-btn:clamp(10px,1.4vmin,20px);   /* button-row gap */
+  --gap-dir:clamp(12px,1.6vmin,22px);   /* dir-area gap */
+  --panel-hist:clamp(140px,15vw,180px); /* history panel — caps so centre stage dominates */
+  --panel-right:clamp(120px,13vw,155px);/* right panel */
 }
 #app{
   background:var(--bg);color:var(--tx);
   font-family:'Courier New',Courier,monospace;
-  font-size:12px;height:570px;
+  font-size:clamp(10px,1.1vmin,14px);
+  width:100%;height:100vh;
   display:flex;flex-direction:column;overflow:hidden;
   position:relative;
 }
@@ -34,7 +49,7 @@
   border-bottom:1px solid var(--bd);flex-shrink:0;
 }
 .hdr-title{
-  font-size:13px;font-weight:bold;letter-spacing:3px;
+  font-size:clamp(11px,1.3vmin,16px);font-weight:bold;letter-spacing:3px;
   color:var(--el);text-transform:uppercase;
 }
 .hdr-right{display:flex;gap:14px;align-items:center;}
@@ -60,18 +75,19 @@
   font-size:8px;text-transform:uppercase;letter-spacing:1px;
   color:var(--dim2);margin-bottom:2px;
 }
-.sc-val{font-size:19px;font-weight:bold;color:var(--tx);}
+.sc-val{font-size:clamp(14px,2.1vmin,26px);font-weight:bold;color:var(--tx);}
 .sc-val.el{color:var(--el);}
 .sc-val.gd{color:var(--gold);}
 .sc-val.ok{color:var(--ok);}
 /* MAIN */
 .main{
-  flex:1;display:flex;gap:1px;
+  flex:1;min-height:0; /* min-height:0 lets flex children shrink past content size */
+  display:flex;gap:1px;
   background:var(--bd);overflow:hidden;
 }
 /* HISTORY PANEL */
 .hist-pnl{
-  width:176px;flex-shrink:0;background:var(--s1);
+  width:var(--panel-hist);flex-shrink:0;background:var(--s1);
   display:flex;flex-direction:column;overflow:hidden;
 }
 .pnl-lbl{
@@ -132,33 +148,34 @@
 }
 .dir-area{
   position:relative;display:flex;
-  flex-direction:column;align-items:center;gap:14px;
+  flex-direction:column;align-items:center;
+  gap:var(--gap-dir);
 }
 .np-grid{
   display:grid;
-  grid-template-columns:repeat(3,44px);
-  grid-template-rows:repeat(3,44px);
-  gap:3px;
+  grid-template-columns:repeat(3,var(--np-sz));
+  grid-template-rows:repeat(3,var(--np-sz));
+  gap:var(--gap-np);
 }
 .np{
-  width:44px;height:44px;border-radius:4px;
+  width:var(--np-sz);height:var(--np-sz);border-radius:4px;
   border:1px solid var(--bd);background:var(--s2);
   display:flex;align-items:center;justify-content:center;
-  font-size:20px;color:var(--dim2);
+  font-size:clamp(15px,2vmin,26px);color:var(--dim2);
   transition:background 0.04s,border-color 0.04s,color 0.04s;
 }
 .np.act{
   background:rgba(0,184,255,0.15);
   border-color:var(--el);color:var(--el);
 }
-.np.ctr{font-size:9px;}
+.np.ctr{font-size:clamp(7px,0.9vmin,11px);}
 .np.ctr.act{color:var(--el);}
-.btn-row{display:flex;gap:14px;}
+.btn-row{display:flex;gap:var(--gap-btn);}
 .bc{
-  width:38px;height:38px;border-radius:50%;
+  width:var(--bc-sz);height:var(--bc-sz);border-radius:50%;
   border:2px solid var(--bd);background:var(--s2);
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:bold;
+  font-size:clamp(11px,1.5vmin,17px);font-weight:bold;
   opacity:0.35;
   transition:opacity 0.04s,border-color 0.04s,background 0.04s;
 }
@@ -172,8 +189,8 @@
 .bc.act[data-b="3"]{border-color:var(--b3);}
 .bc.act[data-b="4"]{border-color:var(--b4);}
 .fb{
-  position:absolute;bottom:14px;left:0;right:0;
-  text-align:center;font-size:12px;font-weight:bold;
+  position:absolute;bottom:clamp(10px,2.5vh,24px);left:0;right:0;
+  text-align:center;font-size:clamp(11px,1.4vmin,16px);font-weight:bold;
   letter-spacing:2px;text-transform:uppercase;
   color:transparent;pointer-events:none;
   transition:color 0.08s;
@@ -183,7 +200,7 @@
 .fb.ht{color:var(--gold);}
 /* RIGHT PANEL */
 .rpnl{
-  width:148px;flex-shrink:0;background:var(--s1);
+  width:var(--panel-right);flex-shrink:0;background:var(--s1);
   display:flex;flex-direction:column;overflow:hidden;
 }
 .kb-tbl{padding:6px 8px;}
@@ -222,7 +239,8 @@
 #mover.show{display:flex;}
 .mpnl{
   background:var(--s2);border:1px solid var(--bd2);
-  border-radius:6px;padding:22px;width:290px;
+  border-radius:6px;padding:22px;
+  width:min(290px,90vw); /* safe on narrow phones */
 }
 .mt{
   font-size:12px;color:var(--el);text-align:center;
@@ -244,6 +262,23 @@
   animation:blink 0.5s infinite;
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+/* ── RESPONSIVE BREAKPOINTS ──────────────────────────────
+   Tablet / small laptop (≤ 900 px wide)
+   Tighten panel widths so the centre stage keeps more room.        */
+@media(max-width:900px){
+  :root{
+    --panel-hist:clamp(110px,19vw,150px);
+    --panel-right:clamp(95px,16vw,130px);
+  }
+}
+/* Mobile (≤ 600 px wide)
+   Side panels are hidden — no keyboard on mobile anyway.
+   The input visualiser + stats bar remain fully functional.        */
+@media(max-width:600px){
+  .hist-pnl,.rpnl{display:none;}
+  .focus-hint{display:none;}
+  .bot{flex-direction:column;align-items:flex-start;gap:2px;padding:4px 8px;}
+}
   </style>
 </head>
 <body>
