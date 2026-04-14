@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:;">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Practice Electric Wind God Fist (EWGF) timing with real-time keyboard and gamepad input detection. Frame-perfect training tool for Tekken players.">
+  <meta name="theme-color" content="#06060d">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26A1;</text></svg>">
+  <title>EWGF Perfect Trainer</title>
+  <style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06060d;--s1:#0c0c1a;--s2:#121224;--s3:#1a1a2e;
+  --bd:#252545;--bd2:#3a3a6a;
+  --tx:#b0b0cc;--dim:#48486a;--dim2:#606088;
+  --el:#00b8ff;--el2:#7700ee;--gold:#ffc300;
+  --ok:#00e07a;--fail:#ff3344;
+  --b1:#4488ff;--b2:#ffaa00;--b3:#33bb55;--b4:#ff4455;
+}
+#app{
+  background:var(--bg);color:var(--tx);
+  font-family:'Courier New',Courier,monospace;
+  font-size:12px;height:570px;
+  display:flex;flex-direction:column;overflow:hidden;
+  position:relative;
+}
+/* HEADER */
+.hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 12px;background:var(--s1);
+  border-bottom:1px solid var(--bd);flex-shrink:0;
+}
+.hdr-title{
+  font-size:13px;font-weight:bold;letter-spacing:3px;
+  color:var(--el);text-transform:uppercase;
+}
+.hdr-right{display:flex;gap:14px;align-items:center;}
+.dev{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim2);}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--dim);}
+.dot.on{background:var(--ok);}
+.map-btn{
+  background:var(--s2);border:1px solid var(--bd2);
+  color:var(--tx);padding:2px 9px;border-radius:3px;
+  font-size:10px;cursor:pointer;font-family:inherit;
+  text-transform:uppercase;letter-spacing:1px;
+}
+.map-btn:hover{border-color:var(--el);color:var(--el);}
+/* STATS BAR */
+.sbar{
+  display:flex;gap:1px;flex-shrink:0;
+  background:var(--bd);border-bottom:1px solid var(--bd);
+}
+.sc{
+  flex:1;background:var(--s1);padding:6px 8px;text-align:center;
+}
+.sc-lbl{
+  font-size:8px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--dim2);margin-bottom:2px;
+}
+.sc-val{font-size:19px;font-weight:bold;color:var(--tx);}
+.sc-val.el{color:var(--el);}
+.sc-val.gd{color:var(--gold);}
+.sc-val.ok{color:var(--ok);}
+/* MAIN */
+.main{
+  flex:1;display:flex;gap:1px;
+  background:var(--bd);overflow:hidden;
+}
+/* HISTORY PANEL */
+.hist-pnl{
+  width:176px;flex-shrink:0;background:var(--s1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.pnl-lbl{
+  font-size:9px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--dim2);padding:5px 10px;
+  border-bottom:1px solid var(--bd);flex-shrink:0;
+}
+.hist-list{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;
+}
+.hist-list::-webkit-scrollbar{width:2px;}
+.hist-list::-webkit-scrollbar-track{background:var(--s1);}
+.hist-list::-webkit-scrollbar-thumb{background:var(--bd2);}
+.he{
+  display:flex;align-items:center;gap:5px;
+  padding:2px 8px 2px 6px;
+  border-bottom:1px solid rgba(37,37,69,0.4);
+  flex-shrink:0;min-height:24px;
+}
+.he.elec{
+  background:rgba(0,184,255,0.08);
+  border-left:2px solid var(--el);
+}
+.he.wgf{background:rgba(255,51,68,0.05);}
+.he-dir{
+  width:20px;text-align:center;font-size:15px;
+  flex-shrink:0;color:var(--tx);line-height:1;
+}
+.he-dir.n{font-size:8px;color:var(--dim2);}
+.he-btns{display:flex;gap:2px;flex:1;}
+.hb{
+  width:14px;height:14px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:bold;
+}
+.he-tag{font-size:7px;font-weight:bold;flex-shrink:0;}
+.he-tag.el{color:var(--el);}
+.he-tag.wg{color:var(--fail);}
+.he-fr{
+  font-size:8px;color:var(--dim2);
+  width:22px;text-align:right;flex-shrink:0;
+}
+/* CENTER */
+.stage{
+  flex:1;background:var(--s1);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  gap:0;
+}
+#lc{position:absolute;inset:0;pointer-events:none;}
+.focus-hint{
+  position:absolute;top:6px;left:0;right:0;text-align:center;
+  font-size:9px;color:var(--dim);letter-spacing:1px;
+  text-transform:uppercase;pointer-events:none;
+  transition:opacity 0.3s;
+}
+.dir-area{
+  position:relative;display:flex;
+  flex-direction:column;align-items:center;gap:14px;
+}
+.np-grid{
+  display:grid;
+  grid-template-columns:repeat(3,44px);
+  grid-template-rows:repeat(3,44px);
+  gap:3px;
+}
+.np{
+  width:44px;height:44px;border-radius:4px;
+  border:1px solid var(--bd);background:var(--s2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--dim2);
+  transition:background 0.04s,border-color 0.04s,color 0.04s;
+}
+.np.act{
+  background:rgba(0,184,255,0.15);
+  border-color:var(--el);color:var(--el);
+}
+.np.ctr{font-size:9px;}
+.np.ctr.act{color:var(--el);}
+.btn-row{display:flex;gap:14px;}
+.bc{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid var(--bd);background:var(--s2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:bold;
+  opacity:0.35;
+  transition:opacity 0.04s,border-color 0.04s,background 0.04s;
+}
+.bc.act{opacity:1;background:rgba(255,255,255,0.07);}
+.bc[data-b="1"]{color:var(--b1);}
+.bc[data-b="2"]{color:var(--b2);}
+.bc[data-b="3"]{color:var(--b3);}
+.bc[data-b="4"]{color:var(--b4);}
+.bc.act[data-b="1"]{border-color:var(--b1);}
+.bc.act[data-b="2"]{border-color:var(--b2);}
+.bc.act[data-b="3"]{border-color:var(--b3);}
+.bc.act[data-b="4"]{border-color:var(--b4);}
+.fb{
+  position:absolute;bottom:14px;left:0;right:0;
+  text-align:center;font-size:12px;font-weight:bold;
+  letter-spacing:2px;text-transform:uppercase;
+  color:transparent;pointer-events:none;
+  transition:color 0.08s;
+}
+.fb.el{color:var(--el);}
+.fb.wg{color:var(--fail);}
+.fb.ht{color:var(--gold);}
+/* RIGHT PANEL */
+.rpnl{
+  width:148px;flex-shrink:0;background:var(--s1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.kb-tbl{padding:6px 8px;}
+.kr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:2px 0;border-bottom:1px solid rgba(37,37,69,0.4);
+}
+.kl{color:var(--dim2);font-size:9px;}
+.kk{
+  background:var(--s2);border:1px solid var(--bd2);
+  border-radius:2px;padding:1px 4px;font-size:9px;color:var(--tx);
+}
+.seq-box{
+  margin:0 8px;padding:8px;
+  background:var(--s2);border:1px solid var(--bd);border-radius:3px;
+  font-size:10px;line-height:1.9;
+}
+.seq-box .seq-title{
+  font-size:8px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--dim2);margin-bottom:4px;
+}
+/* BOTTOM */
+.bot{
+  padding:5px 12px;background:var(--s1);
+  border-top:1px solid var(--bd);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.bot-h{font-size:9px;color:var(--dim2);}
+/* MAPPING OVERLAY */
+#mover{
+  display:none;position:absolute;inset:0;
+  background:rgba(6,6,13,0.96);z-index:100;
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+}
+#mover.show{display:flex;}
+.mpnl{
+  background:var(--s2);border:1px solid var(--bd2);
+  border-radius:6px;padding:22px;width:290px;
+}
+.mt{
+  font-size:12px;color:var(--el);text-align:center;
+  margin-bottom:14px;letter-spacing:2px;text-transform:uppercase;
+}
+.mr{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--bd);font-size:11px;
+}
+.mr:last-child{border-bottom:none;}
+.mbtn{
+  background:var(--s1);border:1px solid var(--bd2);
+  border-radius:3px;padding:2px 10px;color:var(--tx);
+  font-size:10px;cursor:pointer;font-family:inherit;
+  min-width:90px;text-align:center;
+}
+.mbtn.lst{
+  border-color:var(--el);color:var(--el);
+  animation:blink 0.5s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="hdr">
+      <div class="hdr-title">&#x26A1;EWGF Trainer</div>
+      <div class="hdr-right">
+        <div class="dev"><span class="dot on"></span>KB Active</div>
+        <div class="dev"><span class="dot" id="gpdot"></span><span id="gplbl">No Controller</span></div>
+        <button class="map-btn" onclick="openMap()">Map Gamepad</button>
+      </div>
+    </div>
+
+    <div class="sbar">
+      <div class="sc"><div class="sc-lbl">Electric</div><div class="sc-val el" id="sv-ew">0</div></div>
+      <div class="sc"><div class="sc-lbl">Accuracy</div><div class="sc-val gd" id="sv-ac">&#8212;</div></div>
+      <div class="sc"><div class="sc-lbl">Streak</div><div class="sc-val ok" id="sv-sk">0</div></div>
+      <div class="sc"><div class="sc-lbl">Best</div><div class="sc-val" id="sv-bk">0</div></div>
+      <div class="sc"><div class="sc-lbl">Total</div><div class="sc-val" id="sv-tt">0</div></div>
+    </div>
+
+    <div class="main">
+      <div class="hist-pnl">
+        <div class="pnl-lbl">Input History</div>
+        <div class="hist-list" id="hlist"></div>
+      </div>
+
+      <div class="stage" id="stage" tabindex="0">
+        <canvas id="lc"></canvas>
+        <div class="focus-hint" id="fhint">Click here &middot; then use keyboard</div>
+
+        <div class="dir-area">
+          <div class="np-grid">
+            <div class="np" data-n="7">&#x2196;</div>
+            <div class="np" data-n="8">&#x2191;</div>
+            <div class="np" data-n="9">&#x2197;</div>
+            <div class="np" data-n="4">&#x2190;</div>
+            <div class="np ctr" data-n="5">&#x25CF;</div>
+            <div class="np" data-n="6">&#x2192;</div>
+            <div class="np" data-n="1">&#x2199;</div>
+            <div class="np" data-n="2">&#x2193;</div>
+            <div class="np" data-n="3">&#x2198;</div>
+          </div>
+          <div class="btn-row">
+            <div class="bc" data-b="1" id="bv1">1</div>
+            <div class="bc" data-b="2" id="bv2">2</div>
+            <div class="bc" data-b="3" id="bv3">3</div>
+            <div class="bc" data-b="4" id="bv4">4</div>
+          </div>
+        </div>
+        <div class="fb" id="fb"></div>
+      </div>
+
+      <div class="rpnl">
+        <div class="pnl-lbl">Keyboard</div>
+        <div class="kb-tbl">
+          <div class="kr"><span class="kl">Forward</span><span class="kk">&#x2192; / D</span></div>
+          <div class="kr"><span class="kl">Back</span><span class="kk">&#x2190; / A</span></div>
+          <div class="kr"><span class="kl">Down</span><span class="kk">&#x2193; / S</span></div>
+          <div class="kr"><span class="kl">Up</span><span class="kk">&#x2191; / W</span></div>
+          <div class="kr"><span class="kl">Btn 1</span><span class="kk">Z</span></div>
+          <div class="kr"><span class="kl" style="color:var(--b2)">Btn 2 &#x2605;</span><span class="kk">X</span></div>
+          <div class="kr"><span class="kl">Btn 3</span><span class="kk">C</span></div>
+          <div class="kr"><span class="kl">Btn 4</span><span class="kk">V</span></div>
+          <div class="kr"><span class="kl">Reset</span><span class="kk">R</span></div>
+        </div>
+        <div class="pnl-lbl" style="margin-top:4px;">Sequence</div>
+        <div class="seq-box">
+          <div class="seq-title">EWGF Motion</div>
+          <div style="color:var(--tx)">&#x2192; &#x25CF; &#x2193; <span style="color:var(--el)">&#x2198;+2</span></div>
+          <div style="font-size:9px;margin-top:6px;line-height:1.7;">
+            <div><span style="color:var(--el)">&#x2198;+2 same frame</span></div>
+            <div>= <strong style="color:var(--el)">ELECTRIC &#x26A1;</strong></div>
+            <div style="margin-top:4px;"><span style="color:var(--fail)">&#x2198; &#x2192; 2 late</span></div>
+            <div>= <span style="color:var(--fail)">WGF</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bot">
+      <div class="bot-h">Gamepad: D-Pad / Left stick for dirs &middot; Face buttons configurable above</div>
+      <div class="bot-h">Press <strong>R</strong> to reset session</div>
+    </div>
+
+    <div id="mover">
+      <div class="mpnl">
+        <div class="mt">Gamepad Button Mapping</div>
+        <div class="mr">
+          <span style="color:var(--b1)">Btn 1 (LP)</span>
+          <button class="mbtn" id="mb1" onclick="startListen(1)">GP Button <span id="gi1">0</span></button>
+        </div>
+        <div class="mr">
+          <span style="color:var(--b2)">Btn 2 (HP) &#x2605;</span>
+          <button class="mbtn" id="mb2" onclick="startListen(2)">GP Button <span id="gi2">1</span></button>
+        </div>
+        <div class="mr">
+          <span style="color:var(--b3)">Btn 3 (LK)</span>
+          <button class="mbtn" id="mb3" onclick="startListen(3)">GP Button <span id="gi3">2</span></button>
+        </div>
+        <div class="mr">
+          <span style="color:var(--b4)">Btn 4 (HK)</span>
+          <button class="mbtn" id="mb4" onclick="startListen(4)">GP Button <span id="gi4">3</span></button>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <button class="map-btn" onclick="closeMap()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+// ─── CONSTANTS ───────────────────────────────────────────
+const BSZ = 120;
+const D = {U:1,Dn:2,L:4,R:8};
+const B = {B1:1,B2:2,B3:4,B4:8};
+
+// ─── STATE ───────────────────────────────────────────────
+const buf = Array.from({length:BSZ},()=>({d:0,b:0}));
+let bh = 0; // buffer head (current frame index)
+
+const ks = {d:0,b:0};
+let gpm = {b1:0,b2:1,b3:2,b4:3};
+let mapListen = 0;
+
+const stats = {ew:0,wg:0,sk:0,bk:0};
+let fbTimer = 0;
+let stageFocused = false;
+
+// History segments
+let curSeg = null; // {np, b, f}
+let pendingTag = null; // tag for next flush
+
+// ─── NUMPAD ──────────────────────────────────────────────
+function np(dirs){
+  const u=!!(dirs&D.U),d=!!(dirs&D.Dn),l=!!(dirs&D.L),r=!!(dirs&D.R);
+  if(u&&l)return 7; if(u&&r)return 9; if(d&&l)return 1; if(d&&r)return 3;
+  if(u)return 8; if(d)return 2; if(l)return 4; if(r)return 6;
+  return 5;
+}
+
+// ─── KEYBOARD INPUT ──────────────────────────────────────
+const KM = {
+  'ArrowRight':'R','KeyD':'R','ArrowLeft':'L','KeyA':'L',
+  'ArrowDown':'Dn','KeyS':'Dn','ArrowUp':'U','KeyW':'U',
+  'KeyZ':'B1','KeyX':'B2','KeyC':'B3','KeyV':'B4'
+};
+document.addEventListener('keydown',e=>{
+  if(e.repeat)return;
+  if(e.code==='KeyR'){resetSession();return;}
+  const m=KM[e.code];
+  if(!m)return;
+  e.preventDefault();
+  if(m==='R')ks.d|=D.R; else if(m==='L')ks.d|=D.L;
+  else if(m==='Dn')ks.d|=D.Dn; else if(m==='U')ks.d|=D.U;
+  else if(m==='B1')ks.b|=B.B1; else if(m==='B2')ks.b|=B.B2;
+  else if(m==='B3')ks.b|=B.B3; else if(m==='B4')ks.b|=B.B4;
+  hideFocusHint();
+});
+document.addEventListener('keyup',e=>{
+  const m=KM[e.code];
+  if(!m)return;
+  e.preventDefault();
+  if(m==='R')ks.d&=~D.R; else if(m==='L')ks.d&=~D.L;
+  else if(m==='Dn')ks.d&=~D.Dn; else if(m==='U')ks.d&=~D.U;
+  else if(m==='B1')ks.b&=~B.B1; else if(m==='B2')ks.b&=~B.B2;
+  else if(m==='B3')ks.b&=~B.B3; else if(m==='B4')ks.b&=~B.B4;
+});
+const stage=document.getElementById('stage');
+stage.addEventListener('click',()=>{stage.focus();hideFocusHint();});
+stage.addEventListener('focus',()=>{stageFocused=true;});
+function hideFocusHint(){
+  const h=document.getElementById('fhint');
+  if(h)h.style.opacity='0';
+}
+
+// ─── GAMEPAD ─────────────────────────────────────────────
+function gpState(){
+  const gps=navigator.getGamepads?navigator.getGamepads():[];
+  let d=0,b=0;
+  for(const gp of gps){
+    if(!gp)continue;
+    if(mapListen>0){
+      for(let i=0;i<gp.buttons.length;i++){
+        if(gp.buttons[i].pressed){assignMap(mapListen,i);break;}
+      }
+    }
+    if(gp.buttons[12]?.pressed)d|=D.U;
+    if(gp.buttons[13]?.pressed)d|=D.Dn;
+    if(gp.buttons[14]?.pressed)d|=D.L;
+    if(gp.buttons[15]?.pressed)d|=D.R;
+    const ax=gp.axes[0]||0,ay=gp.axes[1]||0,th=0.5;
+    if(ax>th)d|=D.R; if(ax<-th)d|=D.L;
+    if(ay>th)d|=D.Dn; if(ay<-th)d|=D.U;
+    if(gp.buttons[gpm.b3]?.pressed)b|=B.B1;
+    if(gp.buttons[gpm.b4]?.pressed)b|=B.B2;
+    if(gp.buttons[gpm.b1]?.pressed)b|=B.B3;
+    if(gp.buttons[gpm.b2]?.pressed)b|=B.B4;
+    break;
+  }
+  return{d,b};
+}
+function updGpStatus(){
+  const gps=navigator.getGamepads?navigator.getGamepads():[];
+  let conn=false;
+  for(const g of gps)if(g){conn=true;break;}
+  const dot=document.getElementById('gpdot');
+  const lbl=document.getElementById('gplbl');
+  if(dot)dot.className='dot'+(conn?' on':'');
+  if(lbl)lbl.textContent=conn?'Controller OK':'No Controller';
+}
+window.addEventListener('gamepadconnected',updGpStatus);
+window.addEventListener('gamepaddisconnected',updGpStatus);
+
+// ─── EWGF DETECTION ──────────────────────────────────────
+function getSeq(len){
+  const s=[];
+  for(let i=0;i<len;i++){
+    const idx=(bh-i+BSZ)%BSZ;
+    s.push(np(buf[idx].d));
+  }
+  return s;
+}
+
+function validateQCF(startBack){
+  // Going backwards from startBack frames ago, find D→N→F pattern
+  // (in reverse time: first D, then N, then F going further back)
+  let ph='D',hasN=false;
+  for(let i=startBack;i<startBack+45;i++){
+    const idx=(bh-i+BSZ)%BSZ;
+    const n=np(buf[idx].d);
+    if(ph==='D'){
+      if(n===2||n===3){ph='N';}
+      else if(n===5){/* might still find D */}
+      else if(n===6||n===9){return{ok:false};}
+      else return{ok:false};
+    } else if(ph==='N'){
+      if(n===5){hasN=true;ph='F';}
+      else if(n===2||n===3){/* still D phase */}
+      else if(n===6||n===9){return{ok:true,hasN:false};}
+      else return{ok:false};
+    } else if(ph==='F'){
+      if(n===6||n===9){return{ok:true,hasN};}
+      else if(n===5){/* still neutral */}
+      else return{ok:false};
+    }
+  }
+  return{ok:false};
+}
+
+function detect(currD,currB,prevB){
+  const b2New=!!(currB&B.B2)&&!(prevB&B.B2);
+  if(!b2New)return null;
+  const cn=np(currD);
+
+  // ── Case A: current frame IS DF (3) ──
+  if(cn===3){
+    // How many consecutive frames has DF been held before this?
+    let held=0;
+    for(let i=1;i<25;i++){
+      const idx=(bh-i+BSZ)%BSZ;
+      if(np(buf[idx].d)===3)held++;
+      else break;
+    }
+    // Validate QCF sequence before DF phase
+    const qcf=validateQCF(held+1);
+    if(!qcf.ok)return null;
+    if(held===0){
+      // DF just activated this frame → JUST FRAME
+      return qcf.hasN
+        ?{type:'EWGF'}
+        :{type:'WGF',msg:'No neutral — missing ● between → and ↓'};
+    } else {
+      return{type:'WGF',msg:`${held}f late — press 2 the moment you hit ↘`};
+    }
+  }
+
+  // ── Case B: button pressed after DF (player let go of DF) ──
+  let dfAgo=-1;
+  for(let i=1;i<=12;i++){
+    const idx=(bh-i+BSZ)%BSZ;
+    const n=np(buf[idx].d);
+    if(n===3){dfAgo=i;break;}
+    if(n!==2&&n!==5&&n!==6)break;
+  }
+  if(dfAgo===-1)return null;
+
+  // Count DF hold duration
+  let dfHeld=0;
+  for(let i=dfAgo;i<dfAgo+20;i++){
+    const idx=(bh-i+BSZ)%BSZ;
+    if(np(buf[idx].d)===3)dfHeld++;
+    else break;
+  }
+  const qcf=validateQCF(dfAgo+dfHeld);
+  if(!qcf.ok)return null;
+  return{type:'WGF',msg:`${dfAgo}f late — sync ↘+2 on same frame`};
+}
+
+// ─── LIGHTNING ENGINE ────────────────────────────────────
+const canvas=document.getElementById('lc');
+const ctx=canvas?canvas.getContext('2d'):null;
+let ltFrames=0,ltBolts=[];
+
+function resizeLt(){
+  if(!canvas)return;
+  const p=canvas.parentElement;
+  canvas.width=p.offsetWidth;canvas.height=p.offsetHeight;
+}
+
+function mkBolt(x1,y1,x2,y2,rough,depth){
+  if(depth===0)return[[x1,y1,x2,y2]];
+  const mx=(x1+x2)/2+(Math.random()-0.5)*rough;
+  const my=(y1+y2)/2+(Math.random()-0.5)*rough;
+  return[...mkBolt(x1,y1,mx,my,rough/1.75,depth-1),
+         ...mkBolt(mx,my,x2,y2,rough/1.75,depth-1)];
+}
+
+function fireLt(){
+  if(!canvas||!ctx)return;
+  ltFrames=50;ltBolts=[];
+  const cx=canvas.width/2,cy=canvas.height/2;
+  const r=Math.min(cx,cy)*0.82;
+  const nb=5+Math.floor(Math.random()*3);
+  for(let i=0;i<nb;i++){
+    const ang=(Math.PI*2*i/nb)+(Math.random()-0.5)*0.4;
+    const ex=cx+Math.cos(ang)*r,ey=cy+Math.sin(ang)*r;
+    const col=Math.random()>0.45?'#00b8ff':'#9933ff';
+    ltBolts.push({segs:mkBolt(cx,cy,ex,ey,r*0.52,5),col});
+  }
+  // Secondary shorter bolts
+  for(let i=0;i<3;i++){
+    const ang=Math.random()*Math.PI*2;
+    const rr=r*0.45;
+    const ex=cx+Math.cos(ang)*rr,ey=cy+Math.sin(ang)*rr;
+    ltBolts.push({segs:mkBolt(cx,cy,ex,ey,rr*0.6,4),col:'#ffffff'});
+  }
+}
+
+function drawLt(){
+  if(!ctx||!canvas){return;}
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(ltFrames<=0)return;
+  const t=ltFrames/50;
+  const alpha=t<0.2?t/0.2:1;
+  if(ltFrames>38){
+    ctx.fillStyle=`rgba(0,180,255,${(ltFrames-38)/12*0.12})`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  for(const bolt of ltBolts){
+    ctx.beginPath();
+    ctx.strokeStyle=bolt.col;
+    ctx.lineWidth=bolt.col==='#ffffff'?0.7:1.5;
+    ctx.globalAlpha=alpha*(bolt.col==='#ffffff'?0.6:0.85);
+    for(const[x1,y1,x2,y2]of bolt.segs){
+      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  ltFrames--;
+}
+
+// ─── HISTORY ─────────────────────────────────────────────
+const NPS={
+  5:{s:'●',c:'n'},6:{s:'→',c:''},4:{s:'←',c:''},
+  2:{s:'↓',c:''},8:{s:'↑',c:''},3:{s:'↘',c:''},
+  1:{s:'↙',c:''},7:{s:'↖',c:''},9:{s:'↗',c:''}
+};
+
+function pushHistory(n,b,f,tag){
+  const list=document.getElementById('hlist');
+  if(!list)return;
+  const np2=NPS[n]||NPS[5];
+  const isEl=tag==='elec',isWg=tag==='wgf';
+
+  // Build button indicators using DOM to avoid innerHTML with dynamic values
+  const btnsEl=document.createElement('div');
+  btnsEl.className='he-btns';
+  [[B.B1,'#1a2a55','var(--b1)','1'],[B.B2,'#3a1015','var(--b2)','2'],
+   [B.B3,'#0d2e17','var(--b3)','3'],[B.B4,'#2e2000','var(--b4)','4']]
+    .forEach(([mask,bg,color,label])=>{
+      if(!(b&mask))return;
+      const hb=document.createElement('div');
+      hb.className='hb';
+      hb.style.cssText=`background:${bg};color:${color}`;
+      hb.textContent=label;
+      btnsEl.appendChild(hb);
+    });
+
+  const el=document.createElement('div');
+  el.className='he'+(isEl?' elec':isWg?' wgf':'');
+
+  const dirEl=document.createElement('div');
+  dirEl.className='he-dir'+(np2.c?' '+np2.c:'');
+  dirEl.textContent=np2.s;
+
+  const frEl=document.createElement('div');
+  frEl.className='he-fr';
+  frEl.textContent=f+'f';
+
+  el.appendChild(dirEl);
+  el.appendChild(btnsEl);
+
+  if(isEl||isWg){
+    const badge=document.createElement('span');
+    badge.className='he-tag '+(isEl?'el':'wg');
+    badge.textContent=isEl?'⚡EL':'WGF';
+    el.appendChild(badge);
+  }
+
+  el.appendChild(frEl);
+  list.insertBefore(el,list.firstChild);
+  while(list.children.length>70)list.removeChild(list.lastChild);
+}
+
+function flushSeg(tag){
+  if(!curSeg)return;
+  const {n,b,f}=curSeg;
+  // Filter out very short neutral-only segments (noise)
+  if(n===5&&b===0&&f<2){curSeg=null;return;}
+  pushHistory(n,b,f,tag||'norm');
+  curSeg=null;
+}
+
+// ─── UI UPDATES ──────────────────────────────────────────
+let lastNP=-1,lastB=-1;
+function updDisplay(currD,currB){
+  const n=np(currD);
+  if(n!==lastNP){
+    document.querySelectorAll('.np').forEach(el=>{
+      el.classList.toggle('act',parseInt(el.dataset.n)===n);
+    });
+    lastNP=n;
+  }
+  if(currB!==lastB){
+    [1,2,3,4].forEach(i=>{
+      const mask=i===1?B.B1:i===2?B.B2:i===3?B.B3:B.B4;
+      document.getElementById('bv'+i)?.classList.toggle('act',!!(currB&mask));
+    });
+    lastB=currB;
+  }
+}
+
+function showFb(txt,cls,dur){
+  const el=document.getElementById('fb');
+  if(!el)return;
+  el.textContent=txt;el.className='fb '+cls;
+  fbTimer=dur;
+}
+
+function updStats(){
+  const tot=stats.ew+stats.wg;
+  const acc=tot>0?Math.round(stats.ew/tot*100):null;
+  const $=id=>document.getElementById(id);
+  $('sv-ew').textContent=stats.ew;
+  $('sv-ac').textContent=acc!==null?acc+'%':'—';
+  $('sv-sk').textContent=stats.sk;
+  $('sv-bk').textContent=stats.bk;
+  $('sv-tt').textContent=tot;
+}
+
+function resetSession(){
+  stats.ew=0;stats.wg=0;stats.sk=0;stats.bk=0;
+  curSeg=null;pendingTag=null;
+  updStats();
+  const l=document.getElementById('hlist');
+  if(l)l.innerHTML='';
+  showFb('SESSION RESET','ht',60);
+}
+
+// ─── MAPPING UI ──────────────────────────────────────────
+function openMap(){document.getElementById('mover').classList.add('show');}
+function closeMap(){document.getElementById('mover').classList.remove('show');mapListen=0;}
+function startListen(n){
+  mapListen=n;
+  const btn=document.getElementById('mb'+n);
+  if(btn){btn.className='mbtn lst';btn.textContent='Press any button...';}
+}
+function assignMap(n,idx){
+  mapListen=0;
+  if(n===1)gpm.b1=idx; else if(n===2)gpm.b2=idx;
+  else if(n===3)gpm.b3=idx; else if(n===4)gpm.b4=idx;
+  const mb=document.getElementById('mb'+n);
+  if(mb){
+    mb.className='mbtn';
+    mb.textContent='GP Button ';
+    const span=document.createElement('span');
+    span.id='gi'+n;
+    span.textContent=String(idx);
+    mb.appendChild(span);
+  }
+}
+
+// ─── MAIN LOOP ───────────────────────────────────────────
+let prevB=0;
+
+function loop(){
+  const gp=gpState();
+  const currD=ks.d|gp.d;
+  const currB=ks.b|gp.b;
+  const currNP=np(currD);
+
+  // Store frame
+  buf[bh]={d:currD,b:currB};
+
+  // Detect EWGF/WGF on button 2 press
+  const res=detect(currD,currB,prevB);
+  if(res){
+    // Flush current segment with result tag
+    const tag=res.type==='EWGF'?'elec':'wgf';
+    // If segment exists and is the DF phase, flush it as tagged
+    if(curSeg&&curSeg.n===currNP){
+      pushHistory(curSeg.n,curSeg.b|(currB&B.B2),curSeg.f+1,tag);
+      curSeg=null;
+    } else {
+      // Push current moment directly
+      flushSeg('norm');
+      pushHistory(currNP,currB,1,tag);
+      curSeg=null;
+    }
+
+    if(res.type==='EWGF'){
+      stats.ew++;stats.sk++;
+      if(stats.sk>stats.bk)stats.bk=stats.sk;
+      fireLt();
+      showFb('⚡ ELECTRIC!','el',100);
+    } else {
+      stats.wg++;stats.sk=0;
+      showFb(res.msg||'Wind God Fist','wg',110);
+    }
+    updStats();
+  } else {
+    // Normal segment tracking
+    if(curSeg&&curSeg.n===currNP&&curSeg.b===currB){
+      curSeg.f++;
+    } else {
+      flushSeg('norm');
+      curSeg={n:currNP,b:currB,f:1};
+    }
+  }
+
+  // Update visuals
+  updDisplay(currD,currB);
+  drawLt();
+
+  // Feedback countdown
+  if(fbTimer>0){
+    fbTimer--;
+    if(fbTimer===0){
+      const el=document.getElementById('fb');
+      if(el)el.className='fb';
+    }
+  }
+
+  bh=(bh+1)%BSZ;
+  prevB=currB;
+  requestAnimationFrame(loop);
+}
+
+// ─── INIT ────────────────────────────────────────────────
+resizeLt();
+new ResizeObserver(resizeLt).observe(document.getElementById('stage'));
+updGpStatus();
+updStats();
+requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
